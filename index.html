@@ -3,10 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>The Slam Book — You Better Write Something Real</title>
+<title>The Slam Book — Write Something Real</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Reenie+Beanie&family=Fraunces:ital,opsz,wght@0,9..144,300;1,9..144,700&family=DM+Mono:ital@0;1&display=swap" rel="stylesheet">
-
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -32,452 +31,199 @@ body{
   color:var(--ink);
   overflow-x:hidden;
   min-height:100vh;
-  position:relative;
 }
 
-/* ──────────────────────────────
-   CUSTOM CURSOR — FOUNTAIN PEN
-────────────────────────────── */
-#cursor-wrap{
+/* ── CURSOR ── */
+#cursor-pen-svg{
   position:fixed;
   top:0;left:0;
   pointer-events:none;
   z-index:9999;
   will-change:transform;
+  transform:translate(-50%,-50%);
+  transition:transform 0.05s linear;
 }
-#cursor-pen{
-  width:48px;
-  height:48px;
-  transform:translate(-6px,-44px) rotate(0deg);
-  transform-origin:75% 90%;
-  transition:transform 0.08s ease;
-  filter:drop-shadow(0 3px 6px rgba(0,0,0,0.5));
+#cursor-pen-svg svg{
+  width:56px;height:56px;
+  transform:translate(-8px,-46px) rotate(0deg);
+  transform-origin:70% 88%;
+  transition:transform 0.12s cubic-bezier(.34,1.56,.64,1), filter 0.15s ease;
+  filter:drop-shadow(0 4px 12px rgba(232,146,10,0.35)) drop-shadow(0 2px 4px rgba(0,0,0,0.5));
 }
-#cursor-wrap.clicking #cursor-pen{
-  transform:translate(-6px,-44px) rotate(15deg) scale(0.88);
+body.cursor-clicking #cursor-pen-svg svg{
+  transform:translate(-8px,-46px) rotate(20deg) scale(0.85);
+  filter:drop-shadow(0 2px 6px rgba(232,146,10,0.6)) drop-shadow(0 1px 2px rgba(0,0,0,0.6));
 }
-#cursor-wrap.hovering #cursor-pen{
-  transform:translate(-6px,-44px) rotate(-8deg) scale(1.05);
+body.cursor-hovering #cursor-pen-svg svg{
+  transform:translate(-8px,-46px) rotate(-10deg) scale(1.08);
+  filter:drop-shadow(0 6px 18px rgba(232,146,10,0.5)) drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+}
+body.cursor-typing #cursor-pen-svg svg{
+  transform:translate(-8px,-46px) rotate(5deg) scale(0.95);
+  filter:drop-shadow(0 3px 8px rgba(232,146,10,0.4));
 }
 
-.ink-trail{
-  position:fixed;
-  pointer-events:none;
-  z-index:9998;
+/* ink particles */
+.ink-dot{
+  position:fixed;pointer-events:none;z-index:9995;
   border-radius:50%;
+  width:5px;height:5px;
   transform:translate(-50%,-50%);
-  animation:ink-fade 0.9s ease-out forwards;
+  animation:ink-dot-fade 0.8s ease-out forwards;
 }
-@keyframes ink-fade{
-  0%{opacity:0.75;width:5px;height:5px;background:#e8920a}
-  50%{opacity:0.4;width:3px;height:3px;background:#9b3d20}
-  100%{opacity:0;width:1px;height:1px;background:#9b3d20}
+@keyframes ink-dot-fade{
+  0%{opacity:0.8;transform:translate(-50%,-50%) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(0.2)}
 }
 .ink-splat{
-  position:fixed;
-  pointer-events:none;
-  z-index:9997;
-  border-radius:50% 60% 40% 55%;
+  position:fixed;pointer-events:none;z-index:9994;
+  border-radius:50% 60% 40% 55%/55% 40% 60% 50%;
   transform:translate(-50%,-50%) scale(0);
-  animation:splat-pop 0.5s cubic-bezier(0.25,1.5,0.5,1) forwards;
+  animation:splat-pop 0.55s cubic-bezier(0.22,1.5,0.5,1) forwards;
   background:var(--amber);
-  opacity:0.6;
 }
 @keyframes splat-pop{
-  0%{transform:translate(-50%,-50%) scale(0);opacity:0.8}
-  60%{transform:translate(-50%,-50%) scale(1);opacity:0.5}
-  100%{transform:translate(-50%,-50%) scale(1.4);opacity:0}
+  0%{transform:translate(-50%,-50%) scale(0) rotate(0deg);opacity:0.9}
+  55%{transform:translate(-50%,-50%) scale(1) rotate(8deg);opacity:0.55}
+  100%{transform:translate(-50%,-50%) scale(1.6) rotate(12deg);opacity:0}
+}
+.ink-line{
+  position:fixed;pointer-events:none;z-index:9993;
+  height:2px;
+  transform-origin:left center;
+  animation:line-fade 0.5s ease-out forwards;
+  background:linear-gradient(90deg,var(--amber),transparent);
+  border-radius:2px;
+}
+@keyframes line-fade{
+  0%{opacity:0.5}100%{opacity:0}
 }
 
-/* ──────────────────────────────
-   PAPER TEXTURE OVERLAY
-────────────────────────────── */
+/* ── PAPER TEXTURE ── */
 body::after{
-  content:'';
-  position:fixed;
-  inset:0;
-  pointer-events:none;
-  z-index:0;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-  opacity:0.6;
-  mix-blend-mode:multiply;
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity:0.6;mix-blend-mode:multiply;
 }
 
-/* ──────────────────────────────
-   LOADER
-────────────────────────────── */
+/* ── LOADER ── */
 #loader{
   position:fixed;inset:0;z-index:2000;
   background:var(--ink);
-  display:flex;align-items:center;justify-content:center;
-  flex-direction:column;gap:24px;
-  transition:opacity 0.8s ease, visibility 0.8s ease;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;
+  transition:opacity 0.7s ease, visibility 0.7s ease;
 }
 #loader.gone{opacity:0;visibility:hidden}
-.loader-nib{
-  width:0;height:0;
-  border-left:16px solid transparent;
-  border-right:16px solid transparent;
-  border-top:40px solid var(--amber);
-  position:relative;
-  animation:nib-drip 1.4s ease-in-out infinite;
-}
-.loader-nib::after{
-  content:'';
-  position:absolute;
-  top:0;left:-4px;
-  width:8px;height:16px;
-  background:var(--amber);
-  border-radius:0 0 4px 4px;
-  top:-40px;
-  animation:drip 1.4s ease-in-out infinite;
-}
-@keyframes nib-drip{
-  0%,100%{transform:translateY(0)}
-  50%{transform:translateY(8px)}
-}
-@keyframes drip{
-  0%,100%{height:16px}
-  50%{height:24px}
-}
-.loader-txt{
-  font-family:var(--mono);
-  font-size:0.75rem;
-  letter-spacing:0.3em;
-  text-transform:uppercase;
-  color:var(--amber);
-  opacity:0.7;
-  animation:pulse-fade 1.4s ease infinite;
-}
-@keyframes pulse-fade{0%,100%{opacity:0.4}50%{opacity:0.9}}
+.ld-nib{animation:nib-bob 1.2s ease-in-out infinite}
+@keyframes nib-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(9px)}}
+.ld-txt{font-family:var(--mono);font-size:0.7rem;letter-spacing:0.35em;text-transform:uppercase;color:var(--amber);opacity:0.6;animation:pulse 1.3s ease infinite}
+@keyframes pulse{0%,100%{opacity:0.3}50%{opacity:0.9}}
 
-/* ──────────────────────────────
-   COVER
-────────────────────────────── */
-#cover{
-  position:relative;z-index:1;
-  min-height:100vh;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  background:radial-gradient(ellipse at 25% 30%, #1e0f02 0%, #0e0a05 70%);
-  overflow:hidden;
-  padding:40px 20px;
-}
-.cover-rule{
-  position:absolute;inset:0;
-  background:repeating-linear-gradient(
-    transparent,
-    transparent 28px,
-    rgba(212,160,23,0.06) 28px,
-    rgba(212,160,23,0.06) 29px
-  );
-  pointer-events:none;
-}
-.cover-margin{
-  position:absolute;
-  top:0;bottom:0;left:80px;
-  width:2px;
-  background:rgba(192,57,43,0.25);
-  pointer-events:none;
-}
-.cover-blob{
-  position:absolute;pointer-events:none;
-  border-radius:60% 40% 70% 30%;
-  opacity:0.07;
-  animation:blob-drift 12s ease-in-out infinite;
-}
-.cb1{width:500px;height:400px;background:var(--amber);top:-100px;left:-120px;animation-delay:0s}
-.cb2{width:350px;height:500px;background:var(--rust);bottom:-80px;right:-60px;animation-delay:-4s}
-.cb3{width:200px;height:200px;background:#c0a060;top:40%;left:15%;animation-delay:-8s}
-@keyframes blob-drift{
-  0%,100%{transform:rotate(0deg) scale(1)}
-  33%{transform:rotate(8deg) scale(1.05)}
-  66%{transform:rotate(-5deg) scale(0.95)}
-}
-
-/* ink splatter dots */
-.cover-dot{position:absolute;border-radius:50%;pointer-events:none;background:var(--amber)}
-
-.cover-top-tape{
-  width:100px;height:22px;
-  background:rgba(212,160,23,0.28);
-  transform:rotate(-2deg);
-  margin-bottom:-6px;
-  border-radius:2px;
-  position:relative;z-index:2;
-}
-.cover-eyebrow{
-  font-family:var(--mono);
-  font-size:0.65rem;
-  letter-spacing:0.35em;
-  text-transform:uppercase;
-  color:var(--amber);
-  opacity:0.6;
-  animation:rise 0.8s 0.4s both;
-  position:relative;z-index:2;
-}
-.cover-title{
-  font-family:var(--serif);
-  font-size:clamp(3rem,10vw,7.5rem);
-  font-weight:700;
-  font-style:italic;
-  color:var(--page);
-  text-align:center;
-  line-height:0.95;
-  margin:14px 0 6px;
-  animation:rise 0.8s 0.6s both;
-  position:relative;z-index:2;
-}
-.cover-title-rule{
-  width:65%;margin:10px auto;
-  height:2px;
-  background:linear-gradient(90deg,transparent,var(--amber),transparent);
-  position:relative;z-index:2;
-}
-.cover-sub{
-  font-family:var(--hand);
-  font-size:clamp(1.1rem,3.5vw,1.7rem);
-  color:var(--page);
-  opacity:0.45;
-  text-align:center;
-  margin-top:6px;
-  animation:rise 0.8s 0.8s both;
-  position:relative;z-index:2;
-}
-.cover-note{
-  font-family:var(--hand);
-  font-size:1.15rem;
-  color:var(--amber);
-  opacity:0.7;
-  margin-top:10px;
-  animation:rise 0.8s 1s both;
-  position:relative;z-index:2;
-  transform:rotate(-1.5deg);
-  display:inline-block;
-}
-
-.enter-btn{
-  margin-top:52px;
-  padding:16px 52px;
-  background:transparent;
-  border:2px solid var(--amber);
-  color:var(--amber);
-  font-family:var(--hand);
-  font-size:1.6rem;
-  cursor:none;
-  position:relative;overflow:hidden;
-  animation:rise 0.8s 1.2s both;
-  z-index:2;
-  transition:color 0.3s;
-  letter-spacing:0.05em;
-}
-.enter-btn::before{
-  content:'';position:absolute;inset:0;
-  background:var(--amber);
-  transform:translateX(-101%);
-  transition:transform 0.38s ease;
-}
-.enter-btn:hover{color:var(--ink)}
-.enter-btn:hover::before{transform:translateX(0)}
-.enter-btn span{position:relative;z-index:1}
-
-@keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
-
-/* ──────────────────────────────
-   NAV
-────────────────────────────── */
-#nav{
-  position:fixed;top:0;left:0;right:0;z-index:500;
-  display:none;
-  padding:10px 24px;
-  background:rgba(247,240,226,0.93);
-  backdrop-filter:blur(10px);
-  border-bottom:1px solid rgba(232,146,10,0.15);
-  align-items:center;justify-content:space-between;
-}
-#nav.visible{display:flex}
-.nav-brand{
-  font-family:var(--serif);
-  font-style:italic;
-  font-size:1.2rem;
-  color:var(--ink);
-}
-.nav-link{
-  background:none;border:none;
-  font-family:var(--hand);
-  font-size:1.15rem;
-  color:var(--muted);
-  cursor:none;
-  padding:4px 10px;
-  transition:color 0.2s;
-}
-.nav-link:hover{color:var(--rust)}
-
-/* ──────────────────────────────
-   PAGE SYSTEM
-────────────────────────────── */
-#app{display:none;position:relative;z-index:1}
-#app.visible{display:block}
-.page{display:none;min-height:100vh;animation:page-in 0.45s ease both}
-.page.active{display:flex}
-@keyframes page-in{from{opacity:0;transform:scale(0.97)}to{opacity:1;transform:scale(1)}}
-
-/* wipe transition */
-.wipe{
-  position:fixed;inset:0;z-index:900;
-  pointer-events:none;
-  background:var(--ink);
-  transform:scaleY(0);
-  transform-origin:bottom;
-}
+/* ── WIPE ── */
+.wipe{position:fixed;inset:0;z-index:900;pointer-events:none;background:var(--ink);transform:scaleY(0);transform-origin:bottom}
 .wipe.in{animation:wipe-in 0.38s cubic-bezier(0.7,0,0.3,1) forwards}
 .wipe.out{transform-origin:top;animation:wipe-out 0.38s cubic-bezier(0.7,0,0.3,1) forwards}
 @keyframes wipe-in{to{transform:scaleY(1)}}
 @keyframes wipe-out{from{transform:scaleY(1)}to{transform:scaleY(0)}}
 
-/* ──────────────────────────────
-   NAME PAGE
-────────────────────────────── */
-#page-name{
-  background:var(--page);
+/* ── SAVING TOAST ── */
+#saving-toast{
+  position:fixed;bottom:24px;right:24px;z-index:800;
+  background:var(--ink);border:1px solid rgba(232,146,10,0.3);
+  padding:12px 20px;font-family:var(--mono);font-size:0.65rem;
+  color:var(--amber);letter-spacing:0.1em;
+  display:none;animation:rise 0.3s ease;
+}
+#saving-toast.show{display:block}
+
+/* ── PAGE SYSTEM ── */
+.page{display:none;min-height:100vh;animation:page-in 0.4s ease both}
+.page.active{display:flex}
+@keyframes page-in{from{opacity:0;transform:scale(0.97)}to{opacity:1;transform:scale(1)}}
+@keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* ════════════
+   COVER
+════════════ */
+#cover{
+  min-height:100vh;display:flex;flex-direction:column;
   align-items:center;justify-content:center;
-  position:relative;overflow:hidden;
+  background:radial-gradient(ellipse at 25% 30%,#1e0f02 0%,#0e0a05 70%);
+  overflow:hidden;padding:40px 20px;position:relative;
 }
-#page-name::before{
-  content:'';position:absolute;inset:0;
-  background:
-    repeating-linear-gradient(transparent,transparent 31px,rgba(100,80,50,0.08) 31px,rgba(100,80,50,0.08) 32px);
+.cover-rule{position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(transparent,transparent 28px,rgba(212,160,23,0.06) 28px,rgba(212,160,23,0.06) 29px)}
+.cover-margin{position:absolute;top:0;bottom:0;left:80px;width:2px;background:rgba(192,57,43,0.2);pointer-events:none}
+.cover-blob{position:absolute;pointer-events:none;border-radius:60% 40% 70% 30%;opacity:0.07;animation:blob 12s ease-in-out infinite}
+.cb1{width:500px;height:400px;background:var(--amber);top:-100px;left:-120px}
+.cb2{width:350px;height:500px;background:var(--rust);bottom:-80px;right:-60px;animation-delay:-4s}
+.cb3{width:200px;height:200px;background:#c0a060;top:40%;left:15%;animation-delay:-8s}
+@keyframes blob{0%,100%{transform:rotate(0deg) scale(1)}33%{transform:rotate(8deg) scale(1.05)}66%{transform:rotate(-5deg) scale(0.95)}}
+.cover-dot{position:absolute;border-radius:50%;pointer-events:none;background:var(--amber)}
+
+.cover-tape{width:100px;height:22px;background:rgba(212,160,23,0.25);transform:rotate(-2deg);margin-bottom:-6px;border-radius:2px;position:relative;z-index:2}
+.cover-eyebrow{font-family:var(--mono);font-size:0.65rem;letter-spacing:0.35em;text-transform:uppercase;color:var(--amber);opacity:0.6;animation:rise 0.8s 0.4s both;position:relative;z-index:2}
+.cover-title{font-family:var(--serif);font-size:clamp(3rem,10vw,7.5rem);font-weight:700;font-style:italic;color:var(--page);text-align:center;line-height:0.95;margin:14px 0 6px;animation:rise 0.8s 0.6s both;position:relative;z-index:2}
+.cover-rule2{width:65%;margin:10px auto;height:2px;background:linear-gradient(90deg,transparent,var(--amber),transparent);position:relative;z-index:2}
+.cover-sub{font-family:var(--hand);font-size:clamp(1.1rem,3.5vw,1.7rem);color:var(--page);opacity:0.45;text-align:center;margin-top:6px;animation:rise 0.8s 0.8s both;position:relative;z-index:2}
+.cover-note{font-family:var(--hand);font-size:1.15rem;color:var(--amber);opacity:0.7;margin-top:10px;animation:rise 0.8s 1s both;position:relative;z-index:2;transform:rotate(-1.5deg);display:inline-block}
+
+.enter-btn{
+  margin-top:52px;padding:16px 52px;background:transparent;
+  border:2px solid var(--amber);color:var(--amber);
+  font-family:var(--hand);font-size:1.6rem;cursor:none;
+  position:relative;overflow:hidden;animation:rise 0.8s 1.2s both;z-index:2;
+  transition:color 0.3s;letter-spacing:0.05em;
 }
-#page-name::after{
-  content:'';position:absolute;
-  top:0;bottom:0;left:72px;
-  width:2px;background:rgba(192,57,43,0.2);
-}
-.name-card{
-  position:relative;z-index:2;
-  max-width:580px;width:90%;
-  padding:56px 52px;
-}
-.name-sticker{
-  font-family:var(--mono);
-  font-size:0.65rem;
-  letter-spacing:0.28em;
-  text-transform:uppercase;
-  color:var(--rust);
-  margin-bottom:10px;
-  opacity:0.75;
-}
-.name-heading{
-  font-family:var(--serif);
-  font-size:clamp(2rem,6vw,3.5rem);
-  font-style:italic;
-  color:var(--ink);
-  line-height:1.1;
-  margin-bottom:8px;
-}
-.name-sub{
-  font-family:var(--hand);
-  font-size:1.15rem;
-  color:var(--muted);
-  margin-bottom:36px;
-  line-height:1.5;
-}
+.enter-btn::before{content:'';position:absolute;inset:0;background:var(--amber);transform:translateX(-101%);transition:transform 0.38s ease}
+.enter-btn:hover{color:var(--ink)}
+.enter-btn:hover::before{transform:translateX(0)}
+.enter-btn span{position:relative;z-index:1}
+
+/* ════════════
+   NAME PAGE
+════════════ */
+#page-name{background:var(--page);align-items:center;justify-content:center;position:relative;overflow:hidden}
+#page-name::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(transparent,transparent 31px,rgba(100,80,50,0.08) 31px,rgba(100,80,50,0.08) 32px)}
+#page-name::after{content:'';position:absolute;top:0;bottom:0;left:72px;width:2px;background:rgba(192,57,43,0.2)}
+
+.name-card{position:relative;z-index:2;max-width:580px;width:90%;padding:56px 52px}
+.name-sticker{font-family:var(--mono);font-size:0.65rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--rust);margin-bottom:10px;opacity:0.75}
+.name-heading{font-family:var(--serif);font-size:clamp(2rem,6vw,3.5rem);font-style:italic;color:var(--ink);line-height:1.1;margin-bottom:8px}
+.name-sub{font-family:var(--hand);font-size:1.15rem;color:var(--muted);margin-bottom:36px;line-height:1.5}
 .ink-field{
-  width:100%;
-  background:transparent;
-  border:none;
-  border-bottom:2.5px solid var(--amber);
-  font-family:var(--hand);
-  font-size:1.8rem;
-  color:var(--ink);
-  padding:8px 4px;
-  outline:none;
-  transition:border-color 0.3s;
-  cursor:none;
+  width:100%;background:transparent;border:none;border-bottom:2.5px solid var(--amber);
+  font-family:var(--hand);font-size:1.8rem;color:var(--ink);padding:8px 4px;
+  outline:none;transition:border-color 0.3s;cursor:none;
 }
 .ink-field:focus{border-color:var(--rust)}
 .ink-field::placeholder{opacity:0.35}
-.field-error{
-  font-family:var(--hand);
-  font-size:1.1rem;
-  color:var(--rust);
-  margin-top:8px;
-  display:none;
-  animation:shake 0.4s ease;
-}
+.field-error{font-family:var(--hand);font-size:1.1rem;color:var(--rust);margin-top:8px;display:none;animation:shake 0.4s ease}
 .field-error.show{display:block}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-
 .start-btn{
-  margin-top:36px;
-  padding:14px 44px;
-  background:var(--ink);
-  color:var(--page);
-  border:none;
-  font-family:var(--hand);
-  font-size:1.4rem;
-  cursor:none;
-  transition:background 0.25s, transform 0.15s;
-  letter-spacing:0.04em;
+  margin-top:36px;padding:14px 44px;background:var(--ink);color:var(--page);
+  border:none;font-family:var(--hand);font-size:1.4rem;cursor:none;
+  transition:background 0.25s,transform 0.15s;letter-spacing:0.04em;
 }
 .start-btn:hover{background:var(--rust);transform:translateY(-2px)}
-.start-btn:disabled{opacity:0.5;cursor:not-allowed}
+.name-doodle{position:absolute;font-family:var(--hand);font-size:2.5rem;opacity:0.09;color:var(--rust);pointer-events:none}
 
-.name-doodle{
-  position:absolute;
-  font-family:var(--hand);
-  font-size:2.5rem;
-  opacity:0.09;
-  color:var(--rust);
-  pointer-events:none;
-}
+/* ════════════
+   QUESTIONS
+════════════ */
+#page-questions{background:var(--page);align-items:center;justify-content:center;position:relative;overflow:hidden;flex-direction:column}
+#page-questions::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(transparent,transparent 31px,rgba(100,80,50,0.08) 31px,rgba(100,80,50,0.08) 32px);pointer-events:none}
+#page-questions::after{content:'';position:absolute;top:0;bottom:0;left:72px;width:2px;background:rgba(192,57,43,0.18);pointer-events:none}
 
-/* ──────────────────────────────
-   QUESTION PAGE
-────────────────────────────── */
-#page-questions{
-  background:var(--page);
-  align-items:center;justify-content:center;
-  position:relative;overflow:hidden;
-  flex-direction:column;
-}
-#page-questions::before{
-  content:'';position:absolute;inset:0;
-  background:repeating-linear-gradient(transparent,transparent 31px,rgba(100,80,50,0.08) 31px,rgba(100,80,50,0.08) 32px);
-  pointer-events:none;
-}
-#page-questions::after{
-  content:'';position:absolute;
-  top:0;bottom:0;left:72px;
-  width:2px;background:rgba(192,57,43,0.18);
-  pointer-events:none;
-}
+.progress-rail{position:fixed;top:0;left:0;right:0;z-index:100;height:4px;background:rgba(0,0,0,0.08)}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--rust),var(--amber));transition:width 0.5s ease}
 
-.progress-rail{
-  position:fixed;top:0;left:0;right:0;z-index:100;
-  height:4px;background:rgba(0,0,0,0.08);
-}
-.progress-fill{
-  height:100%;
-  background:linear-gradient(90deg,var(--rust),var(--amber));
-  transition:width 0.5s ease;
-}
-
-.q-outer{
-  position:relative;z-index:2;
-  width:100%;max-width:700px;
-  padding:80px 20px 40px;
-}
+.q-outer{position:relative;z-index:2;width:100%;max-width:700px;padding:80px 20px 40px}
 .q-card{
-  background:var(--cream);
-  padding:52px 52px 44px;
-  box-shadow:
-    3px 3px 0 #d9cdb5,
-    7px 7px 0 #c9bda0,
-    12px 12px 32px rgba(0,0,0,0.18);
-  position:relative;
-  border-left:6px solid var(--amber);
-  transition:border-color 0.3s;
+  background:var(--cream);padding:52px 52px 44px;
+  box-shadow:3px 3px 0 #d9cdb5,7px 7px 0 #c9bda0,12px 12px 32px rgba(0,0,0,0.18);
+  position:relative;border-left:6px solid var(--amber);transition:border-color 0.3s;
 }
 .q-card.secret{border-left-color:var(--rust);background:#1a0f08;color:var(--page)}
 .q-card.secret .q-text{color:var(--amber)}
@@ -489,430 +235,164 @@ body::after{
 .q-card.secret .choice-btn:hover,.q-card.secret .choice-btn.picked{background:var(--amber);border-color:var(--amber);color:var(--ink)}
 .q-card.secret .next-btn{background:var(--amber);color:var(--ink)}
 .q-card.secret .scale-val{color:var(--amber)}
+.q-card.confidential{border-left-color:#5dcaa5;background:#081a12;color:var(--page)}
+.q-card.confidential .q-text{color:#5dcaa5}
+.q-card.confidential .q-hint{color:rgba(253,246,232,0.4)}
+.q-card.confidential .q-tag{background:#5dcaa5;color:#081a12}
+.q-card.confidential .q-input{color:var(--page);border-bottom-color:rgba(93,202,165,0.4)}
+.q-card.confidential .q-input::placeholder{color:rgba(253,246,232,0.3)}
+.q-card.confidential .next-btn{background:#5dcaa5;color:#081a12}
 
-.secret-badge{
-  display:none;
-  font-family:var(--mono);
-  font-size:0.6rem;
-  letter-spacing:0.3em;
-  color:var(--amber);
-  text-transform:uppercase;
-  margin-bottom:14px;
-  animation:pulse-fade 2s infinite;
-}
+.secret-badge{display:none;font-family:var(--mono);font-size:0.6rem;letter-spacing:0.3em;color:var(--amber);text-transform:uppercase;margin-bottom:14px;animation:pulse 2s infinite}
 .q-card.secret .secret-badge{display:block}
+.conf-badge{display:none;font-family:var(--mono);font-size:0.6rem;letter-spacing:0.3em;color:#5dcaa5;text-transform:uppercase;margin-bottom:14px;animation:pulse 2s infinite}
+.q-card.confidential .conf-badge{display:block}
 
-.q-big-num{
-  position:absolute;top:10px;right:18px;
-  font-family:var(--serif);
-  font-size:5.5rem;
-  font-style:italic;
-  color:var(--amber);
-  opacity:0.12;
-  line-height:1;
-  pointer-events:none;
-}
-.q-card.secret .q-big-num{color:var(--amber);opacity:0.16}
+.q-big-num{position:absolute;top:10px;right:18px;font-family:var(--serif);font-size:5.5rem;font-style:italic;color:var(--amber);opacity:0.12;line-height:1;pointer-events:none}
 
-.q-tag{
-  display:inline-block;
-  background:var(--amber);
-  color:var(--ink);
-  font-family:var(--mono);
-  font-size:0.62rem;
-  letter-spacing:0.22em;
-  text-transform:uppercase;
-  padding:4px 10px;
-  margin-bottom:18px;
-}
-.q-text{
-  font-family:var(--serif);
-  font-size:clamp(1.25rem,3.5vw,1.85rem);
-  font-style:italic;
-  color:var(--ink);
-  line-height:1.4;
-  margin-bottom:12px;
-}
-.q-hint{
-  font-family:var(--hand);
-  font-size:1.05rem;
-  color:var(--muted);
-  opacity:0.65;
-  margin-bottom:22px;
-}
+.q-tag{display:inline-block;background:var(--amber);color:var(--ink);font-family:var(--mono);font-size:0.62rem;letter-spacing:0.22em;text-transform:uppercase;padding:4px 10px;margin-bottom:18px}
+.q-text{font-family:var(--serif);font-size:clamp(1.25rem,3.5vw,1.85rem);font-style:italic;color:var(--ink);line-height:1.4;margin-bottom:12px}
+.q-hint{font-family:var(--hand);font-size:1.05rem;color:var(--muted);opacity:0.65;margin-bottom:22px}
 
 .q-input{
-  width:100%;
-  background:transparent;
-  border:none;
+  width:100%;background:transparent;border:none;
   border-bottom:1.5px solid rgba(232,146,10,0.45);
-  font-family:var(--hand);
-  font-size:1.4rem;
-  color:var(--ink);
-  resize:none;
-  min-height:90px;
-  outline:none;
-  line-height:1.8;
-  cursor:none;
-  transition:border-color 0.3s;
-  padding:4px;
+  font-family:var(--hand);font-size:1.4rem;color:var(--ink);
+  resize:none;min-height:90px;outline:none;line-height:1.8;
+  cursor:none;transition:border-color 0.3s;padding:4px;
 }
 .q-input:focus{border-color:var(--rust)}
 .q-input::placeholder{opacity:0.35}
 
-/* validation nudge */
-.ans-nudge{
-  font-family:var(--hand);
-  font-size:1.15rem;
-  color:var(--rust);
-  margin-top:8px;
-  min-height:24px;
-  transition:opacity 0.3s;
-  opacity:0;
-}
+.ans-nudge{font-family:var(--hand);font-size:1.15rem;color:var(--rust);margin-top:8px;min-height:24px;transition:opacity 0.3s;opacity:0}
 .ans-nudge.show{opacity:1;animation:shake 0.35s ease}
 
 .choice-grid{display:grid;gap:10px;margin-bottom:8px}
-.choice-btn{
-  padding:10px 18px;
-  background:transparent;
-  border:1.5px solid rgba(14,10,5,0.18);
-  font-family:var(--hand);
-  font-size:1.2rem;
-  color:var(--ink);
-  text-align:left;
-  cursor:none;
-  transition:all 0.2s;
-}
-.choice-btn:hover,.choice-btn.picked{
-  background:var(--amber);
-  border-color:var(--amber);
-  color:var(--ink);
-}
+.choice-btn{padding:10px 18px;background:transparent;border:1.5px solid rgba(14,10,5,0.18);font-family:var(--hand);font-size:1.2rem;color:var(--ink);text-align:left;cursor:none;transition:all 0.2s}
+.choice-btn:hover,.choice-btn.picked{background:var(--amber);border-color:var(--amber);color:var(--ink)}
 
 .scale-row{display:flex;align-items:center;gap:12px;margin-bottom:6px}
 .scale-lbl{font-family:var(--hand);font-size:1rem;opacity:0.55;white-space:nowrap}
 input[type=range]{flex:1;accent-color:var(--amber);cursor:none;height:6px}
-.scale-val{
-  font-family:var(--serif);
-  font-size:1.8rem;
-  font-style:italic;
-  color:var(--rust);
-  min-width:36px;
-}
-.q-card.secret .scale-val{color:var(--amber)}
+.scale-val{font-family:var(--serif);font-size:1.8rem;font-style:italic;color:var(--rust);min-width:36px}
 
 .q-actions{display:flex;gap:12px;margin-top:28px;flex-wrap:wrap}
-.next-btn{
-  padding:12px 38px;
-  background:var(--ink);
-  color:var(--page);
-  border:none;
-  font-family:var(--hand);
-  font-size:1.3rem;
-  cursor:none;
-  transition:background 0.25s,transform 0.15s;
-  flex:1;
-}
+.next-btn{padding:12px 38px;background:var(--ink);color:var(--page);border:none;font-family:var(--hand);font-size:1.3rem;cursor:none;transition:background 0.25s,transform 0.15s;flex:1}
 .next-btn:hover{background:var(--rust);transform:translateY(-2px)}
-.skip-btn{
-  padding:12px 22px;
-  background:transparent;
-  color:var(--muted);
-  border:1.5px solid rgba(14,10,5,0.18);
-  font-family:var(--hand);
-  font-size:1.15rem;
-  cursor:none;
-  transition:opacity 0.2s;
-}
+.skip-btn{padding:12px 22px;background:transparent;color:var(--muted);border:1.5px solid rgba(14,10,5,0.18);font-family:var(--hand);font-size:1.15rem;cursor:none;transition:opacity 0.2s}
 .skip-btn:hover{opacity:0.7}
 
-/* ──────────────────────────────
+/* ════════════
    DONE PAGE
-────────────────────────────── */
-#page-done{
-  background:var(--ink);
-  align-items:center;justify-content:center;
-}
-.done-inner{
-  text-align:center;
-  max-width:540px;
-  padding:60px 30px;
-  position:relative;
-}
-.done-stamp{
-  font-family:var(--serif);
-  font-size:3.5rem;
-  font-style:italic;
-  color:var(--amber);
-  border:4px solid var(--amber);
-  display:inline-block;
-  padding:8px 24px;
-  transform:rotate(-5deg);
-  margin-bottom:36px;
-  opacity:0.9;
-  animation:stamp-pop 0.5s cubic-bezier(0.36,0.07,0.19,0.97) both;
-}
+════════════ */
+#page-done{background:var(--ink);align-items:center;justify-content:center}
+.done-inner{text-align:center;max-width:540px;padding:60px 30px;position:relative}
+.done-stamp{font-family:var(--serif);font-size:3.5rem;font-style:italic;color:var(--amber);border:4px solid var(--amber);display:inline-block;padding:8px 24px;transform:rotate(-5deg);margin-bottom:36px;opacity:0.9;animation:stamp-pop 0.5s cubic-bezier(0.36,.07,.19,.97) both}
 @keyframes stamp-pop{from{transform:rotate(-5deg) scale(3);opacity:0}to{transform:rotate(-5deg) scale(1);opacity:0.9}}
 .done-rule{width:50px;height:2px;background:var(--amber);margin:0 auto 28px}
-.done-name{
-  font-family:var(--serif);
-  font-size:2.2rem;
-  font-style:italic;
-  color:var(--page);
-  margin-bottom:14px;
-}
-.done-msg{
-  font-family:var(--hand);
-  font-size:1.3rem;
-  color:var(--page);
-  opacity:0.55;
-  line-height:1.7;
-  margin-bottom:36px;
-}
-.done-joke{
-  font-family:var(--hand);
-  font-size:1.15rem;
-  color:var(--amber);
-  opacity:0.7;
-  margin-bottom:36px;
-  font-style:italic;
-}
-.done-back{
-  padding:12px 36px;
-  background:transparent;
-  border:2px solid var(--amber);
-  color:var(--amber);
-  font-family:var(--hand);
-  font-size:1.3rem;
-  cursor:none;
-  transition:all 0.3s;
-}
+.done-name{font-family:var(--serif);font-size:2.2rem;font-style:italic;color:var(--page);margin-bottom:14px}
+.done-msg{font-family:var(--hand);font-size:1.3rem;color:var(--page);opacity:0.55;line-height:1.7;margin-bottom:36px}
+.done-joke{font-family:var(--hand);font-size:1.15rem;color:var(--amber);opacity:0.7;margin-bottom:36px;font-style:italic}
+.done-back{padding:12px 36px;background:transparent;border:2px solid var(--amber);color:var(--amber);font-family:var(--hand);font-size:1.3rem;cursor:none;transition:all 0.3s}
 .done-back:hover{background:var(--amber);color:var(--ink)}
 
-/* saving toast */
-#saving-toast{
-  position:fixed;bottom:24px;right:24px;z-index:800;
-  background:var(--ink);
-  border:1px solid rgba(232,146,10,0.3);
-  padding:12px 20px;
-  font-family:var(--mono);
-  font-size:0.65rem;
-  color:var(--amber);
-  letter-spacing:0.1em;
-  display:none;
-  animation:rise 0.3s ease;
-}
-#saving-toast.show{display:block}
-
-/* ──────────────────────────────
-   ADMIN PAGE
-────────────────────────────── */
-#page-admin-gate{
-  background:var(--ink);
-  align-items:center;justify-content:center;
-  flex-direction:column;
-}
-.pin-box{
-  border:1px solid rgba(232,146,10,0.2);
-  padding:48px 44px;
-  max-width:380px;width:90%;
-  text-align:center;
-  background:rgba(247,240,226,0.04);
-}
-.pin-box h2{
-  font-family:var(--serif);
-  font-style:italic;
-  color:var(--amber);
-  font-size:1.9rem;
-  margin-bottom:8px;
-}
-.pin-box p{color:var(--page);opacity:0.45;font-family:var(--hand);font-size:1.1rem;margin-bottom:28px}
-.pin-input{
-  width:100%;
-  background:transparent;
-  border:none;
-  border-bottom:2px solid var(--amber);
-  color:var(--amber);
-  font-family:var(--mono);
-  font-size:2rem;
-  text-align:center;
-  letter-spacing:0.5em;
-  outline:none;
-  padding:8px;
-  cursor:none;
-}
-.pin-err{color:var(--rust);font-family:var(--hand);font-size:1.1rem;display:none;margin-top:10px}
-.pin-err.show{display:block;animation:shake 0.35s ease}
-.pin-go{
-  margin-top:28px;
-  width:100%;
-  padding:14px;
-  background:var(--amber);
-  color:var(--ink);
-  border:none;
-  font-family:var(--hand);
-  font-size:1.3rem;
-  cursor:none;
-  transition:background 0.2s;
-}
-.pin-go:hover{background:var(--rust);color:var(--page)}
-
-#page-admin{
-  background:var(--ink);
-  min-height:100vh;
-  padding:70px 24px 60px;
-  display:none;
-}
-#page-admin.active{display:block}
-.admin-wrap{max-width:880px;margin:0 auto}
-.admin-top{
-  display:flex;align-items:flex-end;justify-content:space-between;
-  flex-wrap:wrap;gap:16px;
-  margin-bottom:36px;
-}
-.admin-top h1{
-  font-family:var(--serif);
-  font-style:italic;
-  color:var(--amber);
-  font-size:2.2rem;
-}
-.db-badge{
-  font-family:var(--mono);
-  font-size:0.62rem;
-  letter-spacing:0.18em;
-  padding:4px 10px;
-  border-radius:2px;
-  margin-top:6px;
-  display:inline-block;
-}
-.db-badge.ok{color:#5dcaa5;border:1px solid rgba(93,202,165,0.3)}
-.db-badge.err{color:var(--rust);border:1px solid rgba(155,61,32,0.3)}
-.db-badge.loading{color:var(--amber);border:1px solid rgba(232,146,10,0.3);animation:pulse-fade 1.5s infinite}
-.admin-btns{display:flex;gap:10px;flex-wrap:wrap}
-.a-btn{padding:10px 20px;font-family:var(--hand);font-size:1.15rem;cursor:none;border:none;transition:all 0.2s}
-.a-btn-p{background:var(--amber);color:var(--ink)}.a-btn-p:hover{background:var(--rust);color:var(--page)}
-.a-btn-o{background:transparent;border:1.5px solid var(--amber);color:var(--amber)}.a-btn-o:hover{background:var(--amber);color:var(--ink)}
-.a-btn-d{background:transparent;border:1.5px solid var(--rust);color:var(--rust)}.a-btn-d:hover{background:var(--rust);color:var(--page)}
-.entry-card{
-  border:1px solid rgba(232,146,10,0.15);
-  background:rgba(247,240,226,0.05);
-  padding:28px 30px;
-  margin-bottom:18px;
-  position:relative;
-  animation:rise 0.4s ease both;
-}
-.entry-name{font-family:var(--serif);font-style:italic;font-size:1.5rem;color:var(--amber);margin-bottom:4px}
-.entry-ts{font-family:var(--mono);font-size:0.62rem;color:var(--page);opacity:0.35;letter-spacing:0.12em;margin-bottom:18px}
-.entry-qa{margin-bottom:12px}
-.e-q{font-family:var(--mono);font-size:0.65rem;color:var(--amber);opacity:0.65;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px}
-.e-a{font-family:var(--hand);font-size:1.15rem;color:var(--page);opacity:0.85;line-height:1.5}
-.entry-secret{border-left:3px solid var(--rust);padding-left:12px}
-.e-del{
-  position:absolute;top:14px;right:14px;
-  background:transparent;border:none;
-  color:var(--rust);font-size:1.1rem;cursor:none;opacity:0.4;transition:opacity 0.2s;
-}
-.e-del:hover{opacity:1}
-.admin-empty{
-  text-align:center;color:var(--page);opacity:0.3;
-  font-family:var(--hand);font-size:1.4rem;padding:80px 20px;
-}
-
-@media(max-width:540px){
-  .q-card{padding:36px 24px 30px}
-  .name-card{padding:40px 24px}
-  .pin-box{padding:36px 24px}
-  .admin-wrap{padding:0}
-}
+@media(max-width:540px){.q-card{padding:36px 24px 30px}.name-card{padding:40px 24px}}
 </style>
 </head>
 <body>
 
-<!-- ════════════ CURSOR ════════════ -->
-<div id="cursor-wrap">
-  <svg id="cursor-pen" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- barrel body -->
-    <rect x="14" y="2" width="13" height="26" rx="3" fill="#1a1208" stroke="#e8920a" stroke-width="0.7"/>
-    <!-- barrel highlight -->
-    <rect x="15.5" y="4" width="2" height="20" rx="1" fill="white" opacity="0.08"/>
-    <!-- gold band top -->
-    <rect x="13.5" y="5" width="14" height="2.5" rx="1" fill="#e8920a" opacity="0.6"/>
+<!-- ── CURSOR ── -->
+<div id="cursor-pen-svg">
+  <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- barrel -->
+    <rect x="16" y="2" width="15" height="28" rx="3.5" fill="#1a1208" stroke="#e8920a" stroke-width="0.8"/>
+    <!-- barrel grain lines -->
+    <line x1="16.8" y1="6" x2="30.2" y2="6" stroke="#e8920a" stroke-width="0.3" opacity="0.3"/>
+    <line x1="16.8" y1="22" x2="30.2" y2="22" stroke="#e8920a" stroke-width="0.3" opacity="0.3"/>
+    <!-- highlight -->
+    <rect x="17.5" y="4" width="2.5" height="22" rx="1.2" fill="white" opacity="0.07"/>
+    <!-- top gold band -->
+    <rect x="15.5" y="5.5" width="16" height="3" rx="1.2" fill="#d4a017" opacity="0.65"/>
+    <!-- cap (top) -->
+    <rect x="17" y="2" width="13" height="4" rx="2" fill="#2a1f0a"/>
+    <rect x="18" y="2.5" width="11" height="2" rx="1" fill="#d4a017" opacity="0.4"/>
     <!-- clip -->
-    <rect x="24" y="3" width="2.5" height="18" rx="1.2" fill="#d4a017" opacity="0.85"/>
-    <!-- gold band bottom -->
-    <rect x="13.5" y="25" width="14" height="3.5" rx="1" fill="#e8920a" opacity="0.75"/>
+    <rect x="29" y="3" width="2.8" height="20" rx="1.4" fill="#d4a017" opacity="0.9"/>
+    <rect x="29.5" y="19" width="1.8" height="5" rx="0.9" fill="#d4a017" opacity="0.6"/>
+    <!-- bottom gold band -->
+    <rect x="15.5" y="27" width="16" height="4" rx="1.2" fill="#e8920a" opacity="0.8"/>
     <!-- ink window -->
-    <rect x="16" y="10" width="8" height="11" rx="1.5" fill="#e8920a" opacity="0.18"/>
-    <!-- ink level (animated) -->
-    <rect id="ink-lvl" x="16.5" y="17" width="7" height="3.5" rx="1" fill="#e8920a" opacity="0.55">
-      <animate attributeName="y" values="17;11;17" dur="5s" repeatCount="indefinite"/>
-      <animate attributeName="height" values="3.5;9;3.5" dur="5s" repeatCount="indefinite"/>
+    <rect x="18" y="11" width="9" height="13" rx="2" fill="#e8920a" opacity="0.12" stroke="#e8920a" stroke-width="0.4" stroke-opacity="0.3"/>
+    <!-- ink level -->
+    <rect id="ink-lvl" x="18.5" y="19" width="8" height="4" rx="1" fill="#e8920a" opacity="0.5">
+      <animate attributeName="y" values="19;12;19" dur="4s" repeatCount="indefinite"/>
+      <animate attributeName="height" values="4;11;4" dur="4s" repeatCount="indefinite"/>
     </rect>
-    <!-- nib left -->
-    <path d="M15 28.5 L20.5 28.5 L24 44 L20 41 Z" fill="#e8920a"/>
-    <!-- nib right -->
-    <path d="M26 28.5 L21 28.5 L24 44 L28 41 Z" fill="#c97a08"/>
-    <!-- nib centre split -->
-    <line x1="24" y1="32" x2="24" y2="44" stroke="#1a1208" stroke-width="0.8" opacity="0.5"/>
-    <!-- ink drop at tip (animated) -->
-    <ellipse cx="24" cy="44.5" rx="2" ry="1.4" fill="#e8920a" opacity="0.85" id="nib-drop">
-      <animate attributeName="ry" values="1.4;3;1.4" dur="2s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values="0.85;0.4;0.85" dur="2s" repeatCount="indefinite"/>
+    <!-- nib taper left -->
+    <path d="M16.5 31 L22 31 L28 50 L23 46 Z" fill="#e8920a"/>
+    <!-- nib taper right -->
+    <path d="M30.5 31 L25 31 L28 50 L33 46 Z" fill="#c97a08"/>
+    <!-- nib centre groove -->
+    <line x1="28" y1="34" x2="28" y2="50" stroke="#1a1208" stroke-width="1" opacity="0.55"/>
+    <!-- nib tine split highlight -->
+    <line x1="27" y1="38" x2="22.5" y2="48" stroke="#f0a030" stroke-width="0.4" opacity="0.4"/>
+    <line x1="29" y1="38" x2="33.5" y2="48" stroke="#f0a030" stroke-width="0.4" opacity="0.4"/>
+    <!-- ink bead at tip -->
+    <ellipse cx="28" cy="50.5" rx="2.2" ry="1.5" fill="#e8920a" opacity="0.9">
+      <animate attributeName="ry" values="1.5;3.5;1.5" dur="1.8s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.9;0.35;0.9" dur="1.8s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="50.5;52;50.5" dur="1.8s" repeatCount="indefinite"/>
     </ellipse>
+    <!-- glint on barrel -->
+    <ellipse cx="21" cy="8" rx="1.2" ry="0.6" fill="white" opacity="0.18" transform="rotate(-20 21 8)"/>
   </svg>
 </div>
 
-<!-- ════════════ WIPE ════════════ -->
+<!-- ── WIPE + TOAST ── -->
 <div class="wipe" id="wipe"></div>
-<div id="saving-toast">saving your secrets…</div>
+<div id="saving-toast">inking your secrets…</div>
 
-<!-- ════════════ LOADER ════════════ -->
+<!-- ── LOADER ── -->
 <div id="loader">
-  <div class="loader-nib"></div>
-  <div class="loader-txt">inking the pages…</div>
+  <div class="ld-nib">
+    <svg width="48" height="48" viewBox="0 0 56 56" fill="none">
+      <rect x="16" y="2" width="15" height="28" rx="3.5" fill="#1a1208" stroke="#e8920a" stroke-width="0.8"/>
+      <rect x="15.5" y="5.5" width="16" height="3" rx="1.2" fill="#d4a017" opacity="0.65"/>
+      <path d="M16.5 31 L22 31 L28 50 L23 46 Z" fill="#e8920a"/>
+      <path d="M30.5 31 L25 31 L28 50 L33 46 Z" fill="#c97a08"/>
+      <ellipse cx="28" cy="50.5" rx="2.2" ry="1.5" fill="#e8920a" opacity="0.9">
+        <animate attributeName="ry" values="1.5;3.5;1.5" dur="1.8s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.9;0.35;0.9" dur="1.8s" repeatCount="indefinite"/>
+      </ellipse>
+    </svg>
+  </div>
+  <div class="ld-txt">inking the pages…</div>
 </div>
 
-<!-- ════════════════════════════════════════
-     COVER
-════════════════════════════════════════ -->
+<!-- ════════ COVER ════════ -->
 <section id="cover">
   <div class="cover-rule"></div>
   <div class="cover-margin"></div>
   <div class="cover-blob cb1"></div>
   <div class="cover-blob cb2"></div>
   <div class="cover-blob cb3"></div>
-  <!-- ink dots scattered -->
   <div class="cover-dot" style="width:8px;height:8px;top:12%;left:18%;opacity:0.12"></div>
   <div class="cover-dot" style="width:4px;height:4px;top:28%;right:22%;opacity:0.1"></div>
   <div class="cover-dot" style="width:6px;height:6px;top:68%;left:35%;opacity:0.09"></div>
   <div class="cover-dot" style="width:5px;height:5px;bottom:18%;right:30%;opacity:0.11"></div>
-  <div class="cover-dot" style="width:3px;height:3px;top:45%;left:8%;opacity:0.1"></div>
-
-  <div class="cover-top-tape"></div>
+  <div class="cover-tape"></div>
   <p class="cover-eyebrow">a very personal document</p>
   <h1 class="cover-title">The Slam Book</h1>
-  <div class="cover-title-rule"></div>
+  <div class="cover-rule2"></div>
   <p class="cover-sub">not everyone gets the same questions. just saying.</p>
   <p class="cover-note">⁕ you will be judged. lovingly.</p>
   <button class="enter-btn" id="enterBtn"><span>→ open it</span></button>
 </section>
 
-<!-- ════════════ NAV ════════════ -->
-<nav id="nav">
-  <span class="nav-brand">Slam Book</span>
-  <div>
-    <button class="nav-link" onclick="goHome()">← home</button>
-    <button class="nav-link" onclick="showAdminGate()">admin</button>
-  </div>
-</nav>
-
-<!-- ════════════════════════════════════════
-     APP
-════════════════════════════════════════ -->
+<!-- ════════ APP ════════ -->
 <div id="app">
 
-  <!-- ── NAME PAGE ── -->
+  <!-- NAME PAGE -->
   <section class="page" id="page-name" style="background:var(--page)">
     <div class="name-card">
       <div class="name-doodle" style="top:-10px;right:10px;transform:rotate(12deg)">✦</div>
@@ -926,13 +406,14 @@ input[type=range]{flex:1;accent-color:var(--amber);cursor:none;height:6px}
     </div>
   </section>
 
-  <!-- ── QUESTIONS ── -->
+  <!-- QUESTIONS -->
   <section class="page" id="page-questions">
     <div class="progress-rail"><div class="progress-fill" id="progressFill"></div></div>
     <div class="q-outer">
       <div class="q-card" id="qCard">
         <div class="q-big-num" id="qBigNum">01</div>
         <div class="secret-badge">⬡ classified frequency — handle with care</div>
+        <div class="conf-badge">◈ just between us — fully confidential</div>
         <span class="q-tag" id="qTag">vibe check</span>
         <p class="q-text" id="qText"></p>
         <p class="q-hint" id="qHint"></p>
@@ -946,7 +427,7 @@ input[type=range]{flex:1;accent-color:var(--amber);cursor:none;height:6px}
     </div>
   </section>
 
-  <!-- ── DONE ── -->
+  <!-- DONE -->
   <section class="page" id="page-done">
     <div class="done-inner">
       <div class="done-stamp">SEALED</div>
@@ -954,57 +435,18 @@ input[type=range]{flex:1;accent-color:var(--amber);cursor:none;height:6px}
       <h2 class="done-name" id="doneName">Thanks, human.</h2>
       <p class="done-msg">Your words have been inked into the book.<br/>Forever. Or until the internet ends. Same thing.</p>
       <p class="done-joke" id="doneJoke"></p>
-      <button class="done-back" onclick="goHome()">← go back to the cover</button>
+      <button class="done-back" onclick="goHome()">← back to cover</button>
     </div>
   </section>
 
-  <!-- ── ADMIN GATE ── -->
-  <section class="page" id="page-admin-gate">
-    <div class="pin-box">
-      <h2>Admin Access</h2>
-      <p>enter the secret pin to read the book</p>
-      <input class="pin-input" id="pinInput" type="password" maxlength="6" placeholder="· · · · · ·"/>
-      <p class="pin-err" id="pinErr">wrong pin. enna panra? 🙄</p>
-      <button class="pin-go" id="pinGo">unlock →</button>
-    </div>
-  </section>
+</div>
 
-  <!-- ── ADMIN DASHBOARD ── -->
-  <section class="page" id="page-admin">
-    <div class="admin-wrap">
-      <div class="admin-top">
-        <div>
-          <h1>The Book</h1>
-          <div class="db-badge loading" id="dbBadge">● connecting…</div>
-        </div>
-        <div class="admin-btns">
-          <button class="a-btn a-btn-p" onclick="exportJSON()">⬇ JSON</button>
-          <button class="a-btn a-btn-o" onclick="exportCSV()">⬇ CSV</button>
-          <button class="a-btn a-btn-o" onclick="exportTXT()">⬇ TXT</button>
-          <button class="a-btn a-btn-d" onclick="clearAll()">✕ clear all</button>
-        </div>
-      </div>
-      <div id="entriesWrap"></div>
-    </div>
-  </section>
-
-</div><!-- #app -->
-
-<!-- ════════════════════════════════════════
-     FIREBASE (v9 compat)
-     SETUP: replace the config below with
-     your own from Firebase Console →
-     Project Settings → Your Apps → SDK
-════════════════════════════════════════ -->
+<!-- ════════ FIREBASE ════════ -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, serverTimestamp, orderBy, query }
+import { getFirestore, collection, addDoc, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* ─── YOUR FIREBASE CONFIG ───
-   Go to console.firebase.google.com
-   → Create project → Add web app
-   → Copy config here             */
 const firebaseConfig = {
   apiKey: "AIzaSyBCdRy0k8OAstHv_yZP_K5vdyNkEGGPTGI",
   authDomain: "slambook-45fee.firebaseapp.com",
@@ -1015,168 +457,128 @@ const firebaseConfig = {
 };
 
 const FB_CONFIGURED = !firebaseConfig.apiKey.includes("PASTE");
-
 let db, entriesCol;
 if(FB_CONFIGURED){
   try{
     const app = initializeApp(firebaseConfig);
     db = getFirestore(app);
     entriesCol = collection(db, "slam_entries");
-  }catch(e){
-    console.warn("Firebase init failed:", e);
-  }
+  }catch(e){ console.warn("Firebase init failed:", e); }
 }
 
-/* ── DB API exposed to non-module code ── */
-window._db = {
-  configured: FB_CONFIGURED && !!db,
-
-  async save(entry){
-    if(this.configured){
-      try{
-        await addDoc(entriesCol, {...entry, _ts: serverTimestamp()});
-        return true;
-      }catch(e){
-        console.warn("Firestore save failed:", e);
-        lsSave(entry);
-        return false;
-      }
-    } else {
-      lsSave(entry); return true;
-    }
-  },
-
-  async load(){
-    if(this.configured){
-      try{
-        const snap = await getDocs(query(entriesCol, orderBy("_ts","desc")));
-        return snap.docs.map(d=>({...d.data(), _docId: d.id}));
-      }catch(e){
-        console.warn("Firestore load failed:", e);
-        return lsAll();
-      }
-    }
-    return lsAll();
-  },
-
-  async delete(docId){
-    if(this.configured && docId){
-      try{ await deleteDoc(doc(db,"slam_entries",docId)); return; }
-      catch(e){ console.warn("Delete failed:", e); }
-    }
-  },
-
-  async deleteAll(){
-    if(this.configured){
-      try{
-        const snap = await getDocs(entriesCol);
-        for(const d of snap.docs) await deleteDoc(d.ref);
-        lsClear();
-        return;
-      }catch(e){ console.warn("ClearAll failed:", e); }
-    }
-    lsClear();
-  }
-};
-
-// localStorage fallback
 const LS = "slambook_v4";
 function lsSave(e){ const a=lsAll(); a.unshift(e); localStorage.setItem(LS,JSON.stringify(a)); }
 function lsAll(){ try{ return JSON.parse(localStorage.getItem(LS))||[]; }catch{ return []; } }
-function lsClear(){ localStorage.removeItem(LS); }
 
-// signal ready
+window._db = {
+  configured: FB_CONFIGURED && !!db,
+  async save(entry){
+    if(this.configured){
+      try{ await addDoc(entriesCol, {...entry, _ts: serverTimestamp()}); return true; }
+      catch(e){ console.warn("Firestore save failed:", e); lsSave(entry); return false; }
+    } else { lsSave(entry); return true; }
+  }
+};
 document.dispatchEvent(new Event("dbReady"));
 </script>
 
 <script>
-/* ════════════════════════════════════════
-   CURSOR
-════════════════════════════════════════ */
-const cursorWrap = document.getElementById("cursor-wrap");
+/* ── CURSOR ── */
+const curPen = document.getElementById("cursor-pen-svg");
 let cx=window.innerWidth/2, cy=window.innerHeight/2;
-let lastTrailX=cx, lastTrailY=cy;
-let lastClickX=cx, lastClickY=cy;
-const TRAIL_DIST = 14;
+let prevX=cx, prevY=cy, lastDotX=cx, lastDotY=cy;
+const DOT_DIST = 16;
+const inkColors = ["#e8920a","#c97a08","#9b3d20","#d4a017"];
 
 document.addEventListener("mousemove", e=>{
   cx=e.clientX; cy=e.clientY;
-  cursorWrap.style.left = cx+"px";
-  cursorWrap.style.top  = cy+"px";
-  const dx=cx-lastTrailX, dy=cy-lastTrailY;
-  if(Math.sqrt(dx*dx+dy*dy) > TRAIL_DIST){
-    dropTrail(cx,cy);
-    lastTrailX=cx; lastTrailY=cy;
+  curPen.style.left = cx+"px";
+  curPen.style.top  = cy+"px";
+
+  const dx=cx-lastDotX, dy=cy-lastDotY;
+  const dist = Math.sqrt(dx*dx+dy*dy);
+  if(dist > DOT_DIST){
+    spawnDot(cx, cy);
+    // draw a short ink line in the direction of movement
+    spawnLine(cx, cy, Math.atan2(dy,dx), Math.min(dist*0.6,30));
+    lastDotX=cx; lastDotY=cy;
   }
+  prevX=cx; prevY=cy;
 });
 
 document.addEventListener("mousedown", e=>{
-  cursorWrap.classList.add("clicking");
-  spawnSplat(e.clientX, e.clientY);
-  lastClickX=e.clientX; lastClickY=e.clientY;
+  document.body.classList.add("cursor-clicking");
+  spawnSplat(e.clientX, e.clientY, 12+Math.random()*10);
+  setTimeout(()=>spawnSplat(e.clientX+Math.random()*12-6, e.clientY+Math.random()*12-6, 5+Math.random()*6), 60);
 });
-document.addEventListener("mouseup", ()=> cursorWrap.classList.remove("clicking"));
+document.addEventListener("mouseup",()=> document.body.classList.remove("cursor-clicking"));
 
-document.querySelectorAll("button,input,textarea,select,a,[role=button]").forEach(el=>{
-  el.addEventListener("mouseenter",()=>cursorWrap.classList.add("hovering"));
-  el.addEventListener("mouseleave",()=>cursorWrap.classList.remove("hovering"));
-});
+function addCursorEvents(el){
+  if(!el) return;
+  el.addEventListener("mouseenter",()=> document.body.classList.add("cursor-hovering"));
+  el.addEventListener("mouseleave",()=> document.body.classList.remove("cursor-hovering"));
+  if(el.tagName==="TEXTAREA"||el.tagName==="INPUT"){
+    el.addEventListener("focus",()=> document.body.classList.add("cursor-typing"));
+    el.addEventListener("blur",()=> document.body.classList.remove("cursor-typing"));
+  }
+}
+document.querySelectorAll("button,input,textarea,a,[role=button]").forEach(addCursorEvents);
 
-function dropTrail(x,y){
-  const d = document.createElement("div");
-  d.className = "ink-trail";
-  d.style.left = x+"px";
-  d.style.top  = y+"px";
+function spawnDot(x,y){
+  const d=document.createElement("div"); d.className="ink-dot";
+  const c=inkColors[Math.floor(Math.random()*inkColors.length)];
+  const sz=2+Math.random()*4;
+  d.style.cssText=`left:${x}px;top:${y}px;width:${sz}px;height:${sz}px;background:${c}`;
   document.body.appendChild(d);
   d.addEventListener("animationend",()=>d.remove());
 }
-function spawnSplat(x,y){
-  const s = document.createElement("div");
-  s.className = "ink-splat";
-  const sz = 8 + Math.random()*10;
-  s.style.cssText = `left:${x}px;top:${y}px;width:${sz}px;height:${sz}px`;
+function spawnSplat(x,y,sz){
+  const s=document.createElement("div"); s.className="ink-splat";
+  s.style.cssText=`left:${x}px;top:${y}px;width:${sz}px;height:${sz}px`;
   document.body.appendChild(s);
   s.addEventListener("animationend",()=>s.remove());
 }
+function spawnLine(x,y,angle,len){
+  const l=document.createElement("div"); l.className="ink-line";
+  l.style.cssText=`left:${x}px;top:${y}px;width:${len}px;transform:rotate(${angle}rad)`;
+  document.body.appendChild(l);
+  l.addEventListener("animationend",()=>l.remove());
+}
 
-/* ════════════════════════════════════════
-   ROUTING
-════════════════════════════════════════ */
-const wipe = document.getElementById("wipe");
+/* ── ROUTING ── */
+const wipe=document.getElementById("wipe");
 
-function showPage(id, cb){
-  wipe.className = "wipe in";
+function showPage(id,cb){
+  wipe.className="wipe in";
   setTimeout(()=>{
     document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-    if(id) document.getElementById(id).classList.add("active");
-    wipe.className = "wipe out";
+    if(id) document.getElementById(id)?.classList.add("active");
+    wipe.className="wipe out";
     if(cb) cb();
-  }, 380);
+  },380);
 }
 
 document.getElementById("enterBtn").addEventListener("click",()=>{
-  wipe.className = "wipe in";
+  wipe.className="wipe in";
   setTimeout(()=>{
-    document.getElementById("cover").style.display = "none";
-    document.getElementById("app").classList.add("visible");
-    document.getElementById("nav").classList.add("visible");
-    wipe.className = "wipe out";
+    document.getElementById("cover").style.display="none";
+    document.getElementById("app").style.display="block";
+    wipe.className="wipe out";
     showPage("page-name");
-  }, 380);
+  },380);
 });
 
 function goHome(){
   showPage("page-name",()=>{
-    document.getElementById("nameInput").value = "";
+    document.getElementById("nameInput").value="";
     document.getElementById("nameError").classList.remove("show");
-    answers = {}; currentName = ""; qIdx = 0; questions = [];
+    answers={}; currentName=""; qIdx=0; questions=[];
   });
 }
+window.goHome=goHome;
 
-/* ════════════════════════════════════════
-   VALIDATION NUDGES — Tamil + English sass
-════════════════════════════════════════ */
-const shortNudges = [
+/* ── NUDGES ── */
+const shortNudges=[
   "adada, innum konjam sollu! that's barely a sentence.",
   "okay but... really? that's all? please.",
   "innum oru line adichu vittu paru — you can do better.",
@@ -1184,238 +586,134 @@ const shortNudges = [
   "my dog writes longer than this. and he has paws.",
   "enna aachu? keyboard stuck-a? try again 🙄",
   "sollu sollu — inkku inkku more iru, come on.",
-  "adhu kuda illama — theriyum enna sonnena? bit more please.",
   "unakku idea irukku, type pannu. don't leave me hanging.",
-  "okay that's cute but also... expand? please?",
-  "avan ellam ivlo thaan pesuvaan nu nenachiya — give more!",
   "that answer walked in and immediately sat back down. no.",
-  "innum oru shot: say it like you mean it.",
   "is this a vibe or is this trauma? either way, say more.",
-  "adutha oru sentence thaan — just one more, I promise I won't judge.",
 ];
-const emptyNudges = [
+const emptyNudges=[
   "hello? anyone home? type something naa.",
   "enna, keyboard kaanom? write something.",
-  "idu blank-a irukku — unna maari oru kalai theriyum, sollu.",
-  "even 'idk' is better than silence. try.",
   "this box is sad. give it words.",
   "i'm waiting. the box is waiting. we're both waiting.",
   "sollu illena epdi theriyum? type panni paarunga.",
 ];
+function rnd(a){ return a[Math.floor(Math.random()*a.length)]; }
 
-function randomFrom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-
-/* ════════════════════════════════════════
-   QUESTION BANK
-════════════════════════════════════════ */
-const qBank = [
-  // ── first impression / about ───────────────────────
-  {id:"m1",tag:"first impression",type:"text",secret:false,
-    q:"What was your actual first thought when you met me? Be embarrassingly honest.",
-    hint:"the thought you immediately suppressed."},
-  {id:"m2",tag:"about me",type:"choice",secret:false,
-    q:"Which one describes me best — right now, in this exact moment?",
-    hint:"no overthinking. first instinct wins.",
-    choices:["chaotic but lovable","quietly intense","softer than they seem","absolutely feral energy","dangerous amount of opinions","weirdly comforting to be around"]},
-  {id:"m3",tag:"about me",type:"text",secret:false,
-    q:"What's one thing you notice about me that I probably don't notice about myself?",
-    hint:"the thing you've seen but never said out loud."},
-  {id:"m4",tag:"about me",type:"scale",secret:false,
-    q:"On a scale of 1–10, how weird am I?",
-    hint:"be honest. I can take it.",
-    min:"suspiciously normal",max:"full chaos creature"},
-  {id:"m5",tag:"about me",type:"text",secret:false,
-    q:"If you had to describe me to someone who's never met me, what would you actually say?",
-    hint:"not the polished version. the real one."},
-  {id:"m6",tag:"about me",type:"text",secret:false,
-    q:"What do you think I'm like at 2am when no one's watching?",
-    hint:"your honest guess. I'm curious."},
-  {id:"m7",tag:"about me",type:"choice",secret:false,
-    q:"If I were a weather type, I'd be:",
-    choices:["sudden thunderstorm, then rainbow","foggy morning that slowly clears","relentless golden sunshine","unpredictable hail in July","warm rain that smells like petrichor"]},
-  {id:"m8",tag:"about me",type:"text",secret:false,
-    q:"What's a word or phrase that reminds you of me, and why?",
-    hint:"doesn't have to make sense. it just has to be true."},
-  {id:"m9",tag:"about me",type:"choice",secret:false,
-    q:"If I were a font, I'd be:",
-    choices:["Comic Sans (unhinged in the best way)","Times New Roman (classic, doesn't apologise)","Some weird Google Font nobody uses","All caps Helvetica (intense, no nonsense)","Handwritten and slightly messy"]},
-  {id:"m10",tag:"about me",type:"text",secret:false,
-    q:"What's one assumption you made about me that turned out to be completely wrong?",
-    hint:"we all do it. what was yours?"},
-
-  // ── us / friendship ─────────────────────────────────
-  {id:"u1",tag:"us",type:"text",secret:false,
-    q:"Describe our friendship in one sentence that would make zero sense to anyone else.",
-    hint:"the inside-joke version. go."},
-  {id:"u2",tag:"memory",type:"text",secret:false,
-    q:"Tell me a memory of us that made you actually laugh — the more specific, the better.",
-    hint:"small, real, maybe absurd."},
-  {id:"u3",tag:"memory",type:"text",secret:false,
-    q:"What's something we did together that you'd do again without hesitation?",
-    hint:"even if it was terrible at the time."},
-  {id:"u4",tag:"us",type:"text",secret:false,
-    q:"What's something you've never told me but have thought about telling me?",
-    hint:"now's your chance. I won't bring it up. probably."},
-  {id:"u5",tag:"us",type:"text",secret:false,
-    q:"What's something I do that you find secretly endearing but would never admit to my face?",
-    hint:"the small, slightly embarrassing thing."},
-  {id:"u6",tag:"us",type:"scale",secret:false,
-    q:"How much chaos would our friendship survive?",
-    hint:"1 = careful and fragile, 10 = we've survived everything and will survive more",
-    min:"made of glass",max:"titanium"},
-
-  // ── what you think about me ──────────────────────────
-  {id:"t1",tag:"opinions",type:"text",secret:false,
-    q:"What's something you think I'm genuinely good at, that I probably downplay?",
-    hint:"the real answer, not the safe one."},
-  {id:"t2",tag:"opinions",type:"text",secret:false,
-    q:"If you could change one thing about me — just one — what would it be?",
-    hint:"be gentle. or don't. your call."},
-  {id:"t3",tag:"opinions",type:"text",secret:false,
-    q:"What do you think I'm most afraid of? (your actual guess, not what I've said)",
-    hint:"what you think vs what I claim."},
-  {id:"t4",tag:"opinions",type:"choice",secret:false,
-    q:"When I'm upset, I probably:",
-    choices:["go completely quiet","get loud about unrelated things","pretend everything's fine","spiral inside while smiling outside","start reorganising things aggressively","send a very calm but loaded text"]},
-  {id:"t5",tag:"opinions",type:"scale",secret:false,
-    q:"How well do you actually know me?",
-    hint:"1 = we're practically strangers, 10 = I could write your biography",
-    min:"strangers",max:"could write the biography"},
-  {id:"t6",tag:"opinions",type:"text",secret:false,
-    q:"What's something I do that makes you think 'yep, that's them'?",
-    hint:"the very specific, very me thing."},
-
-  // ── leave something ───────────────────────────────────
-  {id:"l1",tag:"for me",type:"text",secret:false,
-    q:"Leave me a compliment I'd actually believe.",
-    hint:"not the generic kind. the one that's true."},
-  {id:"l2",tag:"for me",type:"text",secret:false,
-    q:"Write me something to read on a terrible day.",
-    hint:"the thing you'd actually say if I called you at midnight."},
-  {id:"l3",tag:"for me",type:"text",secret:false,
-    q:"What song makes you think of me, and why?",
-    hint:"even if the reason is mortifying."},
-  {id:"l4",tag:"for me",type:"text",secret:false,
-    q:"If you could tell me one thing and know I'd really hear it — what would it be?",
-    hint:"say it. I'm listening."},
-  {id:"l5",tag:"for me",type:"text",secret:false,
-    q:"What's something you genuinely hope for me?",
-    hint:"for my future, my heart, my life — whatever."},
-
-  // ── secret / dark mode ────────────────────────────────
-  {id:"s1",tag:"classified",type:"text",secret:true,
-    q:"What's something about me that intimidates you a little? (be honest, I can handle it)",
-    hint:"this page stays sealed."},
-  {id:"s2",tag:"classified",type:"text",secret:true,
-    q:"Have you ever misjudged me? What did you think vs. what you found out?",
-    hint:"no judgment here. promise."},
-  {id:"s3",tag:"classified",type:"text",secret:true,
-    q:"Is there something you've always wanted to ask me but didn't?",
-    hint:"ask it here. now. anonymously."},
-  {id:"s4",tag:"classified",type:"text",secret:true,
-    q:"What's the most honest thing you can say about me right now?",
-    hint:"unfiltered. no consequences."},
-  {id:"s5",tag:"classified",type:"text",secret:true,
-    q:"Do you think I'm happy? What do you actually think?",
-    hint:"not what you'd say to my face."},
-
-  // ── always last ───────────────────────────────────────
-  {id:"z1",tag:"last page",type:"text",secret:false,
-    q:"Leave me something — a word, a line, a lyric, a feeling. Whatever you want me to keep.",
-    hint:"make it yours. this is the last thing I'll read."},
+/* ── QUESTION BANK ── */
+const qBank=[
+  // about me
+  {id:"m1",tag:"first impression",type:"text",secret:false,q:"What was your actual first thought when you met me? Be embarrassingly honest.",hint:"the thought you immediately suppressed."},
+  {id:"m2",tag:"about me",type:"choice",secret:false,q:"Which one describes me best — right now, in this exact moment?",hint:"no overthinking. first instinct wins.",choices:["chaotic but lovable","quietly intense","softer than they seem","absolutely feral energy","dangerous amount of opinions","weirdly comforting to be around"]},
+  {id:"m3",tag:"about me",type:"text",secret:false,q:"What's one thing you notice about me that I probably don't notice about myself?",hint:"the thing you've seen but never said out loud."},
+  {id:"m4",tag:"about me",type:"scale",secret:false,q:"On a scale of 1–10, how weird am I?",hint:"be honest. I can take it.",min:"suspiciously normal",max:"full chaos creature"},
+  {id:"m5",tag:"about me",type:"text",secret:false,q:"If you had to describe me to someone who's never met me, what would you actually say?",hint:"not the polished version. the real one."},
+  {id:"m6",tag:"about me",type:"text",secret:false,q:"What do you think I'm like at 2am when no one's watching?",hint:"your honest guess. I'm curious."},
+  {id:"m7",tag:"about me",type:"choice",secret:false,q:"If I were a weather type, I'd be:",choices:["sudden thunderstorm, then rainbow","foggy morning that slowly clears","relentless golden sunshine","unpredictable hail in July","warm rain that smells like petrichor"]},
+  {id:"m8",tag:"about me",type:"text",secret:false,q:"What's a word or phrase that reminds you of me, and why?",hint:"doesn't have to make sense. it just has to be true."},
+  {id:"m9",tag:"about me",type:"choice",secret:false,q:"If I were a font, I'd be:",choices:["Comic Sans (unhinged in the best way)","Times New Roman (classic, doesn't apologise)","Some weird Google Font nobody uses","All caps Helvetica (intense, no nonsense)","Handwritten and slightly messy"]},
+  {id:"m10",tag:"about me",type:"text",secret:false,q:"What's one assumption you made about me that turned out to be completely wrong?",hint:"we all do it. what was yours?"},
+  // us
+  {id:"u1",tag:"us",type:"text",secret:false,q:"Describe our friendship in one sentence that would make zero sense to anyone else.",hint:"the inside-joke version. go."},
+  {id:"u2",tag:"memory",type:"text",secret:false,q:"Tell me a memory of us that made you actually laugh — the more specific, the better.",hint:"small, real, maybe absurd."},
+  {id:"u3",tag:"memory",type:"text",secret:false,q:"What's something we did together that you'd do again without hesitation?",hint:"even if it was terrible at the time."},
+  {id:"u4",tag:"us",type:"text",secret:false,q:"What's something you've never told me but have thought about telling me?",hint:"now's your chance. I won't bring it up. probably."},
+  {id:"u5",tag:"us",type:"text",secret:false,q:"What's something I do that you find secretly endearing but would never admit to my face?",hint:"the small, slightly embarrassing thing."},
+  {id:"u6",tag:"us",type:"scale",secret:false,q:"How much chaos would our friendship survive?",hint:"1 = careful and fragile, 10 = we've survived everything and will survive more",min:"made of glass",max:"titanium"},
+  // opinions
+  {id:"t1",tag:"opinions",type:"text",secret:false,q:"What's something you think I'm genuinely good at, that I probably downplay?",hint:"the real answer, not the safe one."},
+  {id:"t2",tag:"opinions",type:"text",secret:false,q:"If you could change one thing about me — just one — what would it be?",hint:"be gentle. or don't. your call."},
+  {id:"t3",tag:"opinions",type:"text",secret:false,q:"What do you think I'm most afraid of? (your actual guess, not what I've said)",hint:"what you think vs what I claim."},
+  {id:"t4",tag:"opinions",type:"choice",secret:false,q:"When I'm upset, I probably:",choices:["go completely quiet","get loud about unrelated things","pretend everything's fine","spiral inside while smiling outside","start reorganising things aggressively","send a very calm but loaded text"]},
+  {id:"t5",tag:"opinions",type:"scale",secret:false,q:"How well do you actually know me?",hint:"1 = we're practically strangers, 10 = I could write your biography",min:"strangers",max:"could write the biography"},
+  {id:"t6",tag:"opinions",type:"text",secret:false,q:"What's something I do that makes you think 'yep, that's them'?",hint:"the very specific, very me thing."},
+  // for me
+  {id:"l1",tag:"for me",type:"text",secret:false,q:"Leave me a compliment I'd actually believe.",hint:"not the generic kind. the one that's true."},
+  {id:"l2",tag:"for me",type:"text",secret:false,q:"Write me something to read on a terrible day.",hint:"the thing you'd actually say if I called you at midnight."},
+  {id:"l3",tag:"for me",type:"text",secret:false,q:"What song makes you think of me, and why?",hint:"even if the reason is mortifying."},
+  {id:"l4",tag:"for me",type:"text",secret:false,q:"If you could tell me one thing and know I'd really hear it — what would it be?",hint:"say it. I'm listening."},
+  {id:"l5",tag:"for me",type:"text",secret:false,q:"What's something you genuinely hope for me?",hint:"for my future, my heart, my life — whatever."},
+  // secret
+  {id:"s1",tag:"classified",type:"text",secret:true,q:"What's something about me that intimidates you a little? (be honest, I can handle it)",hint:"this page stays sealed."},
+  {id:"s2",tag:"classified",type:"text",secret:true,q:"Have you ever misjudged me? What did you think vs. what you found out?",hint:"no judgment here. promise."},
+  {id:"s3",tag:"classified",type:"text",secret:true,q:"Is there something you've always wanted to ask me but didn't?",hint:"ask it here. now. anonymously."},
+  {id:"s4",tag:"classified",type:"text",secret:true,q:"What's the most honest thing you can say about me right now?",hint:"unfiltered. no consequences."},
+  {id:"s5",tag:"classified",type:"text",secret:true,q:"Do you think I'm happy? What do you actually think?",hint:"not what you'd say to my face."},
+  // closer
+  {id:"z1",tag:"last page",type:"text",secret:false,q:"Leave me something — a word, a line, a lyric, a feeling. Whatever you want me to keep.",hint:"make it yours. this is the last thing I'll read."},
+  // ★ CONFIDENTIAL — always appended last
+  {id:"c1",tag:"confidential",type:"text",secret:false,confidential:true,
+    q:"Anything else you want to say? This one's just for you.",
+    hint:"off the record. unfiltered. say whatever's sitting in your chest right now."},
 ];
 
 function buildQuestions(){
-  const normals = qBank.filter(q=>!q.secret && q.id!=="z1");
+  const normals = qBank.filter(q=>!q.secret && !q.confidential && q.id!=="z1");
   const secrets = qBank.filter(q=>q.secret);
   const closer  = qBank.find(q=>q.id==="z1");
-  const shuffleArr = a=>[...a].sort(()=>Math.random()-0.5);
-  const picked  = shuffleArr(normals).slice(0,8);
-  const sPicked = shuffleArr(secrets).slice(0,2);
-  // insert secrets somewhere in the middle
-  const mid = Math.floor(picked.length/2);
+  const conf    = qBank.find(q=>q.confidential);
+  const shuffle = a=>[...a].sort(()=>Math.random()-0.5);
+  const picked  = shuffle(normals).slice(0,8);
+  const sPicked = shuffle(secrets).slice(0,2);
+  const mid     = Math.floor(picked.length/2);
   picked.splice(mid, 0, ...sPicked);
   picked.push(closer);
+  picked.push(conf); // always last
   return picked;
 }
 
-/* ════════════════════════════════════════
-   STATE
-════════════════════════════════════════ */
-let questions = [];
-let qIdx = 0;
-let answers = {};
-let currentName = "";
+/* ── STATE ── */
+let questions=[], qIdx=0, answers={}, currentName="";
 
-/* ════════════════════════════════════════
-   NAME → START
-════════════════════════════════════════ */
+/* ── NAME → START ── */
 document.getElementById("startBtn").addEventListener("click", startFlow);
 document.getElementById("nameInput").addEventListener("keydown", e=>{ if(e.key==="Enter") startFlow(); });
 
 function startFlow(){
-  const name = document.getElementById("nameInput").value.trim();
-  const err  = document.getElementById("nameError");
-  if(!name){
-    err.classList.add("show");
-    document.getElementById("nameInput").focus();
-    return;
-  }
-  if(name.length < 2){
-    err.textContent = "two letters minimum naa — who are you, 'X'?";
-    err.classList.add("show");
-    return;
-  }
+  const name=document.getElementById("nameInput").value.trim();
+  const err=document.getElementById("nameError");
+  if(!name){ err.classList.add("show"); document.getElementById("nameInput").focus(); return; }
+  if(name.length<2){ err.textContent="two letters minimum naa — who are you, 'X'?"; err.classList.add("show"); return; }
   err.classList.remove("show");
-  currentName = name;
-  answers = { _name: name, _time: new Date().toISOString() };
-  questions = buildQuestions();
-  qIdx = 0;
+  currentName=name;
+  answers={ _name:name, _time:new Date().toISOString() };
+  questions=buildQuestions(); qIdx=0;
   showPage("page-questions", renderQ);
 }
 
-/* ════════════════════════════════════════
-   RENDER QUESTION
-════════════════════════════════════════ */
+/* ── RENDER QUESTION ── */
 function renderQ(){
-  const q = questions[qIdx];
-  const total = questions.length;
+  const q=questions[qIdx];
+  const total=questions.length;
+  document.getElementById("progressFill").style.width=((qIdx/total)*100)+"%";
+  document.getElementById("qBigNum").textContent=String(qIdx+1).padStart(2,"0");
 
-  // progress
-  document.getElementById("progressFill").style.width = ((qIdx/total)*100)+"%";
-  document.getElementById("qBigNum").textContent = String(qIdx+1).padStart(2,"0");
+  const card=document.getElementById("qCard");
+  card.classList.remove("secret","confidential");
+  if(q.secret) card.classList.add("secret");
+  else if(q.confidential) card.classList.add("confidential");
 
-  // secret mode
-  const card = document.getElementById("qCard");
-  q.secret ? card.classList.add("secret") : card.classList.remove("secret");
-
-  document.getElementById("qTag").textContent  = q.tag;
-  document.getElementById("qText").textContent = q.q;
-  document.getElementById("qHint").textContent = q.hint || "";
+  document.getElementById("qTag").textContent=q.tag;
+  document.getElementById("qText").textContent=q.q;
+  document.getElementById("qHint").textContent=q.hint||"";
   document.getElementById("ansNudge").classList.remove("show");
-  document.getElementById("ansNudge").textContent = "";
+  document.getElementById("ansNudge").textContent="";
 
-  const area = document.getElementById("qInputArea");
-  area.innerHTML = "";
+  // skip button visibility — hide on confidential (always answer or skip freely)
+  document.getElementById("skipBtn").style.display = q.confidential ? "none" : "";
 
-  if(q.type === "text"){
-    const ta = document.createElement("textarea");
-    ta.className = "q-input";
-    ta.id = "ansMain";
-    ta.placeholder = "write something real…";
-    ta.rows = 4;
+  const area=document.getElementById("qInputArea");
+  area.innerHTML="";
+
+  if(q.type==="text"){
+    const ta=document.createElement("textarea");
+    ta.className="q-input"; ta.id="ansMain"; ta.placeholder="write something real…"; ta.rows=4;
     area.appendChild(ta);
-    setTimeout(()=>ta.focus(), 60);
-
-  } else if(q.type === "choice"){
-    const grid = document.createElement("div");
-    grid.className = "choice-grid";
-    grid.style.gridTemplateColumns = q.choices.length > 3 ? "1fr 1fr" : "1fr";
+    setTimeout(()=>ta.focus(),60);
+  } else if(q.type==="choice"){
+    const grid=document.createElement("div"); grid.className="choice-grid";
+    grid.style.gridTemplateColumns=q.choices.length>3?"1fr 1fr":"1fr";
     q.choices.forEach(ch=>{
-      const b = document.createElement("button");
-      b.className = "choice-btn";
-      b.textContent = ch;
-      b.dataset.val = ch;
+      const b=document.createElement("button"); b.className="choice-btn"; b.textContent=ch; b.dataset.val=ch;
       b.addEventListener("click",()=>{
         grid.querySelectorAll(".choice-btn").forEach(x=>x.classList.remove("picked"));
         b.classList.add("picked");
@@ -1424,301 +722,101 @@ function renderQ(){
       grid.appendChild(b);
     });
     area.appendChild(grid);
-    // optional write-in
-    const ta = document.createElement("textarea");
-    ta.className = "q-input";
-    ta.id = "ansMain";
-    ta.placeholder = "or write your own answer…";
-    ta.rows = 2;
-    ta.style.marginTop = "10px";
+    const ta=document.createElement("textarea");
+    ta.className="q-input"; ta.id="ansMain"; ta.placeholder="or write your own answer…"; ta.rows=2; ta.style.marginTop="10px";
     area.appendChild(ta);
-
-  } else if(q.type === "scale"){
-    const row = document.createElement("div");
-    row.className = "scale-row";
-    const minL = document.createElement("span"); minL.className="scale-lbl"; minL.textContent=q.min;
-    const range = document.createElement("input"); range.type="range"; range.min=1; range.max=10; range.value=5; range.id="ansMain";
-    const maxL = document.createElement("span"); maxL.className="scale-lbl"; maxL.textContent=q.max;
-    const val = document.createElement("span"); val.className="scale-val"; val.id="scaleVal"; val.textContent="5";
+  } else if(q.type==="scale"){
+    const row=document.createElement("div"); row.className="scale-row";
+    const minL=document.createElement("span"); minL.className="scale-lbl"; minL.textContent=q.min;
+    const range=document.createElement("input"); range.type="range"; range.min=1; range.max=10; range.value=5; range.id="ansMain";
+    const maxL=document.createElement("span"); maxL.className="scale-lbl"; maxL.textContent=q.max;
+    const val=document.createElement("span"); val.className="scale-val"; val.id="scaleVal"; val.textContent="5";
     range.addEventListener("input",()=>{ val.textContent=range.value; });
-    row.append(minL, range, maxL, val);
+    row.append(minL,range,maxL,val);
     area.appendChild(row);
-    const ta = document.createElement("textarea");
-    ta.className = "q-input";
-    ta.id = "ansExtra";
-    ta.placeholder = "say more if you want…";
-    ta.rows = 2;
-    ta.style.marginTop = "10px";
+    const ta=document.createElement("textarea");
+    ta.className="q-input"; ta.id="ansExtra"; ta.placeholder="say more if you want…"; ta.rows=2; ta.style.marginTop="10px";
     area.appendChild(ta);
   }
 
-  // re-attach hover cursor events for dynamically created elements
-  area.querySelectorAll("button, textarea, input").forEach(el=>{
-    el.addEventListener("mouseenter",()=>cursorWrap.classList.add("hovering"));
-    el.addEventListener("mouseleave",()=>cursorWrap.classList.remove("hovering"));
-  });
+  area.querySelectorAll("button,textarea,input").forEach(addCursorEvents);
 }
 
-/* ════════════════════════════════════════
-   COLLECT + VALIDATE
-════════════════════════════════════════ */
-const MIN_TEXT = 20; // characters
-
+/* ── VALIDATE ── */
+const MIN=20;
 function collectAndValidate(){
-  const q = questions[qIdx];
-  const nudge = document.getElementById("ansNudge");
+  const q=questions[qIdx];
+  const nudge=document.getElementById("ansNudge");
 
-  if(q.type === "text"){
-    const txt = (document.getElementById("ansMain")?.value || "").trim();
-    if(!txt){
-      nudge.textContent = randomFrom(emptyNudges);
-      nudge.classList.add("show");
-      return null;
-    }
-    if(txt.length < MIN_TEXT){
-      nudge.textContent = randomFrom(shortNudges);
-      nudge.classList.add("show");
-      return null; // block advance
-    }
+  if(q.type==="text"){
+    const txt=(document.getElementById("ansMain")?.value||"").trim();
+    if(!txt){ nudge.textContent=rnd(emptyNudges); nudge.classList.add("show"); return null; }
+    if(txt.length<MIN && !q.confidential){ nudge.textContent=rnd(shortNudges); nudge.classList.add("show"); return null; }
     nudge.classList.remove("show");
-    return { q:q.q, a:txt, secret:q.secret, tag:q.tag };
-
-  } else if(q.type === "choice"){
-    const chosen = document.querySelector(".choice-btn.picked");
-    const typed  = (document.getElementById("ansMain")?.value || "").trim();
-    if(!chosen && !typed){
-      nudge.textContent = "pick one or write something — both work!";
-      nudge.classList.add("show");
-      return null;
-    }
+    return {q:q.q,a:txt,secret:q.secret,confidential:!!q.confidential,tag:q.tag};
+  } else if(q.type==="choice"){
+    const chosen=document.querySelector(".choice-btn.picked");
+    const typed=(document.getElementById("ansMain")?.value||"").trim();
+    if(!chosen && !typed){ nudge.textContent="pick one or write something — both work!"; nudge.classList.add("show"); return null; }
     nudge.classList.remove("show");
-    let ans = chosen ? chosen.dataset.val : "";
-    if(typed) ans = ans ? ans+" / "+typed : typed;
-    return { q:q.q, a:ans, secret:q.secret, tag:q.tag };
-
-  } else if(q.type === "scale"){
-    const v     = document.getElementById("ansMain")?.value || "5";
-    const extra = (document.getElementById("ansExtra")?.value || "").trim();
+    let ans=chosen?chosen.dataset.val:"";
+    if(typed) ans=ans?ans+" / "+typed:typed;
+    return {q:q.q,a:ans,secret:q.secret,tag:q.tag};
+  } else if(q.type==="scale"){
+    const v=document.getElementById("ansMain")?.value||"5";
+    const extra=(document.getElementById("ansExtra")?.value||"").trim();
     nudge.classList.remove("show");
-    return { q:q.q, a:v+"/10"+(extra?" — "+extra:""), secret:q.secret, tag:q.tag };
+    return {q:q.q,a:v+"/10"+(extra?" — "+extra:""),secret:q.secret,tag:q.tag};
   }
   return {};
 }
 
 document.getElementById("nextBtn").addEventListener("click",()=>{
-  const result = collectAndValidate();
-  if(result === null) return; // validation failed, stay
-  if(result && result.q) answers[questions[qIdx].id] = result;
+  const r=collectAndValidate(); if(r===null) return;
+  if(r&&r.q) answers[questions[qIdx].id]=r;
   advance();
 });
-document.getElementById("skipBtn").addEventListener("click",()=> advance());
+document.getElementById("skipBtn").addEventListener("click",()=>advance());
 
 function advance(){
   qIdx++;
-  if(qIdx >= questions.length){ finishEntry(); return; }
-  const card = document.getElementById("qCard");
-  card.style.opacity = "0";
-  card.style.transform = "translateY(10px)";
+  if(qIdx>=questions.length){ finishEntry(); return; }
+  const card=document.getElementById("qCard");
+  card.style.opacity="0"; card.style.transform="translateY(10px)";
   setTimeout(()=>{
     renderQ();
-    card.style.transition = "opacity 0.35s, transform 0.35s";
-    card.style.opacity = "1";
-    card.style.transform = "translateY(0)";
-    setTimeout(()=>{ card.style.transition = ""; }, 380);
-  }, 140);
+    card.style.transition="opacity 0.35s,transform 0.35s";
+    card.style.opacity="1"; card.style.transform="translateY(0)";
+    setTimeout(()=>{ card.style.transition=""; },380);
+  },140);
 }
 
-/* ════════════════════════════════════════
-   FINISH
-════════════════════════════════════════ */
-const doneJokes = [
+/* ── FINISH ── */
+const jokes=[
   "warning: this entry will be used as evidence in future roast sessions.",
   "your words are now legally mine. terms & conditions apply.",
-  "fun fact: i read this while eating a packet of chips. no regrets.",
-  "if this were a movie, the credits would roll here. you were the best character.",
   "நான்தான் படிப்பேன். judge panna maatan. maybe.",
   "entry logged. vibes assessed. chai ketaikka varuven.",
-  "this is now stored somewhere safe. probably. don't worry about it.",
-  "officially part of the book now. congrats on existing.",
   "i'll read this at 2am and smile. you don't need to know when.",
+  "officially part of the book now. congrats on existing.",
+  "if this were a movie, the credits would roll here. you were the best character.",
   "consider yourself documented. it's an honour, honestly.",
 ];
 
 async function finishEntry(){
-  document.getElementById("progressFill").style.width = "100%";
-  document.getElementById("doneName").textContent = "Thanks, "+currentName+".";
-  document.getElementById("doneJoke").textContent = randomFrom(doneJokes);
+  document.getElementById("progressFill").style.width="100%";
+  document.getElementById("doneName").textContent="Thanks, "+currentName+".";
+  document.getElementById("doneJoke").textContent=rnd(jokes);
   showPage("page-done");
-
-  // save
-  showToast(true);
-  const db = window._db;
-  if(!db){ showToast(false); return; } // firebase module may still be loading
-  const ok = await db.save(answers);
-  showToast(false);
-  if(!ok) console.warn("Entry saved locally only.");
+  document.getElementById("saving-toast").classList.add("show");
+  const dbApi=window._db;
+  if(!dbApi){ document.getElementById("saving-toast").classList.remove("show"); return; }
+  await dbApi.save(answers);
+  document.getElementById("saving-toast").classList.remove("show");
 }
 
-function showToast(v){
-  document.getElementById("saving-toast").classList.toggle("show", v);
-}
-
-/* ════════════════════════════════════════
-   ADMIN
-════════════════════════════════════════ */
-const ADMIN_PIN = "2807"; // ← change this
-
-function showAdminGate(){
-  showPage("page-admin-gate",()=>{
-    document.getElementById("pinInput").value = "";
-    document.getElementById("pinErr").classList.remove("show");
-    setTimeout(()=>document.getElementById("pinInput").focus(), 100);
-  });
-}
-document.getElementById("pinGo").addEventListener("click", checkPin);
-document.getElementById("pinInput").addEventListener("keydown", e=>{ if(e.key==="Enter") checkPin(); });
-
-function checkPin(){
-  const val = document.getElementById("pinInput").value.trim();
-  if(val === ADMIN_PIN){
-    showPage("page-admin", renderAdmin);
-  } else {
-    const err = document.getElementById("pinErr");
-    err.classList.remove("show");
-    void err.offsetWidth;
-    err.classList.add("show");
-    document.getElementById("pinInput").value = "";
-    document.getElementById("pinInput").focus();
-  }
-}
-
-async function renderAdmin(){
-  const badge = document.getElementById("dbBadge");
-  badge.className = "db-badge loading";
-  badge.textContent = "● loading…";
-
-  const db = window._db;
-  if(!db){
-    badge.className = "db-badge err";
-    badge.textContent = "● db not ready yet, refresh";
-    return;
-  }
-
-  let entries = [];
-  try{
-    entries = await db.load();
-    badge.className = db.configured ? "db-badge ok" : "db-badge err";
-    badge.textContent = db.configured
-      ? `● firebase connected — ${entries.length} entr${entries.length===1?"y":"ies"}`
-      : `● local only — configure Firebase above`;
-  }catch(e){
-    badge.className = "db-badge err";
-    badge.textContent = "● error loading, check console";
-  }
-
-  const wrap = document.getElementById("entriesWrap");
-  wrap.innerHTML = "";
-  if(!entries.length){
-    wrap.innerHTML = '<p class="admin-empty">no entries yet — share the link 👀</p>';
-    return;
-  }
-
-  entries.forEach((entry, idx)=>{
-    const card = document.createElement("div");
-    card.className = "entry-card";
-
-    const del = document.createElement("button");
-    del.className = "e-del"; del.textContent = "✕";
-    del.addEventListener("click", async()=>{
-      if(!confirm("delete this entry?")) return;
-      await db.delete(entry._docId);
-      renderAdmin();
-    });
-    card.appendChild(del);
-
-    const name = document.createElement("div");
-    name.className = "entry-name";
-    name.textContent = entry._name || "Anonymous";
-    card.appendChild(name);
-
-    const ts = document.createElement("div");
-    ts.className = "entry-ts";
-    ts.textContent = entry._time ? new Date(entry._time).toLocaleString() : "";
-    card.appendChild(ts);
-
-    Object.entries(entry).forEach(([k,v])=>{
-      if(k.startsWith("_")) return;
-      if(typeof v !== "object" || !v.q) return;
-      const qa = document.createElement("div");
-      qa.className = "entry-qa"+(v.secret?" entry-secret":"");
-      qa.innerHTML = `<div class="e-q">${v.tag||""} — ${v.q}</div><div class="e-a">${v.a}</div>`;
-      card.appendChild(qa);
-    });
-
-    wrap.appendChild(card);
-  });
-}
-
-/* ════════════════════════════════════════
-   EXPORTS
-════════════════════════════════════════ */
-async function exportJSON(){
-  const data = await window._db.load();
-  dl("slambook.json", JSON.stringify(data, null, 2), "application/json");
-}
-async function exportCSV(){
-  const entries = await window._db.load();
-  const keys = [...new Set(entries.flatMap(e=>Object.keys(e)))];
-  let csv = keys.join(",")+"\n";
-  entries.forEach(e=>{
-    csv += keys.map(k=>{
-      const v=e[k]; if(!v) return "";
-      const s=typeof v==="object"?(v.q+": "+v.a):String(v);
-      return '"'+s.replace(/"/g,'""')+'"';
-    }).join(",")+"\n";
-  });
-  dl("slambook.csv", csv, "text/csv");
-}
-async function exportTXT(){
-  const entries = await window._db.load();
-  let txt="══════════════════\nSLAM BOOK ENTRIES\n══════════════════\n\n";
-  entries.forEach((e,i)=>{
-    txt+=`[${i+1}] ${e._name||"Unknown"}\n    ${e._time?new Date(e._time).toLocaleString():""}\n`;
-    Object.entries(e).forEach(([k,v])=>{
-      if(k.startsWith("_")||typeof v!=="object"||!v.q) return;
-      txt+=`\n    Q: ${v.q}\n    A: ${v.a}\n`;
-    });
-    txt+="\n──────────────────\n\n";
-  });
-  dl("slambook.txt", txt, "text/plain");
-}
-async function clearAll(){
-  if(confirm("delete ALL entries? this cannot be undone."))
-  { await window._db.deleteAll(); renderAdmin(); }
-}
-
-function dl(name, content, mime){
-  const b=new Blob([content],{type:mime});
-  const url=URL.createObjectURL(b);
-  const a=document.createElement("a");a.href=url;a.download=name;
-  document.body.appendChild(a);a.click();
-  document.body.removeChild(a);URL.revokeObjectURL(url);
-}
-
-// expose for onclick
-window.goHome=goHome;
-window.showAdminGate=showAdminGate;
-window.exportJSON=exportJSON;
-window.exportCSV=exportCSV;
-window.exportTXT=exportTXT;
-window.clearAll=clearAll;
-
-/* ════════════════════════════════════════
-   LOADER DISMISS
-════════════════════════════════════════ */
-window.addEventListener("load",()=>{
-  setTimeout(()=>document.getElementById("loader").classList.add("gone"), 1100);
-});
+/* ── LOADER ── */
+window.addEventListener("load",()=>setTimeout(()=>document.getElementById("loader").classList.add("gone"),1000));
 </script>
 </body>
 </html>
