@@ -27,38 +27,6 @@ A personal, interactive slam book built as a single HTML file. Friends fill out 
 | Database | Firebase Firestore v10 (CDN) |
 | Fallback storage | `localStorage` |
 
-## Getting Started
-
-### 1. Clone the repo
-
-```bash
-git clone https://github.com/Dhakkshin/slambook.git
-cd slambook
-```
-
-### 2. Open locally
-
-Because the Firebase SDK is loaded over CDN and the app uses ES modules, you need to serve the file over HTTP rather than opening it directly as a `file://` URL.
-
-```bash
-# Python 3
-python -m http.server 8080
-# then open http://localhost:8080
-```
-
-Any static file server works (VS Code Live Server, `npx serve`, etc.).
-
-### 3. Configure Firebase (optional)
-
-The Firebase project credentials are already embedded in `index.html`. If you want to point the app at your own Firestore database:
-
-1. Create a project at [console.firebase.google.com](https://console.firebase.google.com).
-2. Add a web app and copy the config object.
-3. In `index.html`, replace the `firebaseConfig` object (around line 450) with your own values.
-4. In Firestore, create a collection called `slam_entries` (it is created automatically on the first save).
-
-If you skip this step the app still works — answers are saved to the browser's `localStorage` instead.
-
 ## How It Works
 
 1. **Cover page** — decorative landing screen; click *→ open it* to enter.
